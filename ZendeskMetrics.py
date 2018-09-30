@@ -138,7 +138,7 @@ class ZendeskMetrics:
 
 if __name__ == "__main__":
     user = 'tusharn@qubole.com'
-    token = 'RguZjLV3Vxyk5QWUnpcTWQKmX8d6YvsmhhRW2rWL'
+    token = '<token>'
     number_of_days = 7
     ZendeskMetricsObj = ZendeskMetrics(user, token, number_of_days)
     Schema = ZendeskMetricsObj.CreateSchema()
