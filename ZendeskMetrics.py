@@ -2,6 +2,8 @@ from zenpy import Zenpy
 import datetime
 import calendar
 import pandas as pd
+
+# Dict to map all the custom fields
 Custom_Field_Values = {
     "25192963" : "Escalate_to_Sustenance",
     "24216323" : "Severity_Business_Impact",
@@ -24,11 +26,10 @@ class ZendeskMetrics:
         self.client = Zenpy(**self.creds)
         self.startTime = datetime.datetime.now() - datetime.timedelta(days=NoOfdays)
         self.result_generator = self.client.tickets.incremental(start_time=self.startTime)
-        #print(result_generator.__dir__())
-        #Ticket_Data = CollectMetric()
 
 
 
+# Create Schema for the table
     def CreateSchema(self):
         Custom_Field_Names = []
         i = 1
@@ -48,15 +49,16 @@ class ZendeskMetrics:
         self.Table_Schema = ['Ticket_Id','Ticket_Subject', 'Ticket_Status', 'Assignee', 'Requester', 'Organization', 'Priority'] + Custom_Field_Names + ['Created_At', 'Last_Updated_At']
         return self.Table_Schema
 
-    #DateStr = '2018-09-12T06:26:57Z'
+# Convert String to DataTime Object
+
     def ConvertStrToDatetime(self, DateStr):
         StripDate = DateStr.replace('T', ' ').replace('Z', '')
         #print(StripDate)
         self.DateForm = datetime.datetime.strptime(StripDate, '%Y-%m-%d %H:%M:%S')
         #print(DateForm)
         return self.DateForm
-        #print(DateForm)
-        #print(type(DateForm))
+
+# Fetch Data using zenpy api
 
     def CollectMetrics(self):
         self.All_Tickets = []
@@ -90,14 +92,10 @@ class ZendeskMetrics:
                 ticket_details.append(ticket.priority)
             except:
                 ticket_details.append('Unknown')
+# Fetch data from the custom fields                
             List_custom_Fields = ticket.custom_fields
             for dictItem in List_custom_Fields:
                 if str(dictItem['id']) not in ("24720303", "22165409", "22214565", "22165259"):
-                    #if str(dictItem['id']) == "24703466":
-                    #    UI_Engine_Split_List = str(dictItem['value']).split('__')
-                    #    ticket_details.append(UI_Engine_Split_List[0])
-                    #    ticket_details.append(UI_Engine_Split_List[1])
-                    #    continue
                     if str(dictItem['id']) == "24720283":
                         try:
                             ticket_details.append(int(dictItem['value'])) 
@@ -114,28 +112,27 @@ class ZendeskMetrics:
             try:
                 ticket_details.append(CreatedAtDate)
             except:
-                ticket_details.append(datetime.datetime(1971, 1, 1, 0, 0, 0))
+                ticket_details.append(datetime.datetime(1971, 1, 1, 0, 0, 0))   # For the missing Created_at date
             UpdatedAtDate = self.ConvertStrToDatetime(ticket.updated_at)                          
             try:
                 ticket_details.append(UpdatedAtDate)  
             except:
-                ticket_details.append(datetime.datetime(1971, 1, 1, 0, 0, 0))
-            #print(ticket_details)
+                ticket_details.append(datetime.datetime(1971, 1, 1, 0, 0, 0))  # for the missing Updated_at date
             self.All_Tickets.append(ticket_details)
         return self.All_Tickets
-        #	print(All_Tickets[4])
 
+
+# This function is to create Pandas DataFrame 
     def CreatePandasDF(self, All_Tickets, Schema):
-        df =pd.DataFrame(self.All_Tickets, columns = Schema)
-        #df[['Total_Effort_on_Ticket']] = df[['Total_Effort_on_Ticket']].astype(float).astype(int)   
+        df =pd.DataFrame(self.All_Tickets, columns = Schema)  
         return df
-        #print(df.dtypes)
 
 
 
 
 
 
+# Main Function
 if __name__ == "__main__":
     user = 'tusharn@qubole.com'
     token = '<token>'
@@ -144,13 +141,6 @@ if __name__ == "__main__":
     Schema = ZendeskMetricsObj.CreateSchema()
     All_Tickets_Data = ZendeskMetricsObj.CollectMetrics()
     df = ZendeskMetricsObj.CreatePandasDF(All_Tickets_Data, Schema)
-    #print(df['Ticket_Status'].unique())
-    #print(df['Assignee'].unique())
-    FilterDF = df[(df.Assignee != "Unassigned") & (df.Ticket_Status != "deleted") & (df.Ticket_Id != 00000)]
+    # Filter out Unassigned and Deleted Tickets
+    FilterDF = df[(df.Assignee != "Unassigned") & (df.Ticket_Status != "deleted") & (df.Ticket_Id != 00000)]  
     FilterDF.to_csv("Data.csv", index=False)
-    #print(FilterDF['Assignee'].unique())
-    #print(FilterDF['Ticket_Status'].unique())
-        
-    #print(df.iloc[3])
-    #for i in df.iloc[3]:
-    #    print(type(i))
