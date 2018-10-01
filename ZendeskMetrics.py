@@ -134,7 +134,7 @@ class ZendeskMetrics:
 
 # Main Function
 if __name__ == "__main__":
-    user = 'tusharn@qubole.com'
+    user = '<Zendeskemail>'
     token = '<token>'
     number_of_days = 7
     ZendeskMetricsObj = ZendeskMetrics(user, token, number_of_days)
